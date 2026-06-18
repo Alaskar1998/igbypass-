@@ -17,6 +17,21 @@ export default function handler(req, res) {
       align-items: center; justify-content: center;
       padding: 2rem; text-align: center;
     }
+    .warning {
+      background: rgba(245,166,35,0.1); border: 1px solid rgba(245,166,35,0.3);
+      border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; max-width: 320px;
+    }
+    .warning p { color: #f5a623; margin: 0; font-size: 0.95rem; line-height: 1.6; }
+    h2 { font-size: 1.3rem; margin-bottom: 12px; }
+    .open-btn {
+      display: inline-block; background: #f5a623; color: #000;
+      font-size: 1rem; font-weight: 700; padding: 14px 28px;
+      border-radius: 10px; cursor: pointer; border: none;
+      width: 100%; max-width: 320px; margin-bottom: 16px;
+    }
+    .instruction { font-size: 0.9rem; color: #666; margin-bottom: 24px; line-height: 1.8; max-width: 300px; }
+    .instruction strong { color: #aaa; }
+    .skip { font-size: 0.8rem; color: #444; text-decoration: underline; cursor: pointer; }
     .spinner {
       width: 40px; height: 40px;
       border: 3px solid #1f2937; border-top-color: #f5a623;
@@ -24,37 +39,21 @@ export default function handler(req, res) {
       margin-bottom: 24px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    h2 { font-size: 1.3rem; margin-bottom: 12px; }
-    p { color: #888; font-size: 0.95rem; line-height: 1.6; max-width: 300px; margin: 0 auto 24px; }
-    .gate { display: none; flex-direction: column; align-items: center; }
-    .warning {
-      background: rgba(245,166,35,0.1); border: 1px solid rgba(245,166,35,0.3);
-      border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; max-width: 320px;
-    }
-    .warning p { color: #f5a623; margin: 0; font-size: 0.9rem; }
-    .open-btn {
-      display: inline-block; background: #f5a623; color: #000;
-      font-size: 1rem; font-weight: 700; padding: 14px 28px;
-      border-radius: 10px; text-decoration: none; margin-bottom: 16px;
-      cursor: pointer; border: none; width: 100%; max-width: 320px;
-    }
-    .instruction { font-size: 0.85rem; color: #666; margin-bottom: 20px; line-height: 1.6; }
-    .skip { font-size: 0.8rem; color: #444; text-decoration: underline; cursor: pointer; }
   </style>
 </head>
 <body>
+
   <div id="loading">
     <div class="spinner"></div>
-    <h2>Opening in your browser...</h2>
-    <p>Taking you to your destination in Safari or Chrome.</p>
+    <h2>Opening in Chrome...</h2>
   </div>
 
-  <div class="gate" id="gate">
+  <div id="gate" style="display:none; flex-direction:column; align-items:center;">
     <div class="warning">
-      <p>⚠️ If you continue here, you'll lose all your progress every time you return. Open in your browser to keep your progress.</p>
+      <p>⚠️ If you continue here, you'll lose all your progress every time you return.</p>
     </div>
     <h2>Open in your browser</h2>
-    <button class="open-btn" onclick="tryOpen()" id="openBtn">Open in Safari</button>
+    <button class="open-btn" id="openBtn" onclick="window.location.href='${dest}'">Open in browser</button>
     <p class="instruction" id="instruction"></p>
     <span class="skip" onclick="window.location.href='${dest}'">Continue here anyway</span>
   </div>
@@ -62,7 +61,7 @@ export default function handler(req, res) {
 <script>
   const dest = '${dest}';
   const ua = navigator.userAgent || '';
-  const isIG = ua.includes('Instagram') || ua.includes('FBAN');
+  const isIG = ua.includes('Instagram') || ua.includes('FBAN') || ua.includes('FBAV');
   const isIOS = /iP(hone|ad|od)/.test(ua);
   const isAndroid = /Android/.test(ua);
 
@@ -72,36 +71,26 @@ export default function handler(req, res) {
     gate.style.display = 'flex';
     if (isIOS) {
       document.getElementById('openBtn').textContent = 'Open in Safari';
-      document.getElementById('instruction').innerHTML = 'Or tap <strong>•••</strong> top right → <strong>"Open in browser"</strong>';
+      document.getElementById('instruction').innerHTML = 'Tap <strong>•••</strong> at the top right<br>then tap <strong>"Open in browser"</strong>';
     } else {
       document.getElementById('openBtn').textContent = 'Open in Chrome';
-      document.getElementById('instruction').innerHTML = 'Or tap <strong>⋮</strong> top right → <strong>"Open in browser"</strong>';
-    }
-  }
-
-  function tryOpen() {
-    if (isAndroid) {
-      window.location.href = 'intent://' + dest.replace(/^https?:\\/\\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
-      setTimeout(() => { window.location.href = dest; }, 1500);
-    } else {
-      window.location.href = 'x-web-search://?' + dest;
-      setTimeout(showGate, 1500);
+      document.getElementById('instruction').innerHTML = 'Tap <strong>⋮</strong> at the top right<br>then tap <strong>"Open in browser"</strong>';
     }
   }
 
   if (!isIG) {
+    // Not in IG browser — redirect directly
     window.location.href = dest;
   } else if (isAndroid) {
-    setTimeout(() => {
-      window.location.href = 'intent://' + dest.replace(/^https?:\\/\\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
-      setTimeout(showGate, 2000);
-    }, 800);
-  } else if (isIOS) {
-    setTimeout(() => {
-      window.location.href = 'x-web-search://?' + dest;
-      setTimeout(showGate, 1500);
-    }, 800);
+    // Android — try Chrome intent
+    const intentUrl = 'intent://' + dest.replace(/^https?:\\/\\//, '') +
+      '#Intent;scheme=https;package=com.android.chrome;end';
+    window.location.href = intentUrl;
+    // If intent fails, show gate after 2s
+    setTimeout(showGate, 2000);
   } else {
+    // iOS — can't force Safari, show gate immediately
+    document.getElementById('loading').style.display = 'none';
     showGate();
   }
 <\/script>
