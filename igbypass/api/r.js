@@ -38,7 +38,7 @@ module.exports = (req, res) => {
     <div class="warning">
       <p>⚠️ If you continue here, you'll lose all your progress every time you return.</p>
     </div>
-    <h2>Open in your browser</h2>
+    <h2 id="title">Open in your browser</h2>
     <button class="open-btn" id="openBtn" onclick="window.location.href=dest">Open in browser</button>
     <p class="instruction" id="instruction"></p>
     <span class="skip" onclick="window.location.href=dest">Continue here anyway</span>
@@ -54,12 +54,15 @@ module.exports = (req, res) => {
     document.getElementById('instruction').innerHTML = 'Tap <strong>⋮</strong> top right → <strong>Open in browser</strong>';
     var intentUrl = 'intent://' + dest.replace(/^https?:\\/\\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
     window.location.href = intentUrl;
-    setTimeout(function() { window.location.href = dest; }, 2000);
+    setTimeout(function() {
+      window.location.href = dest;
+    }, 2000);
   } else if (isIOS) {
     document.getElementById('openBtn').textContent = 'Open in Safari';
     document.getElementById('instruction').innerHTML = 'Tap <strong>•••</strong> top right → <strong>Open in browser</strong>';
   } else {
-    window.location.href = dest;
+    document.getElementById('openBtn').textContent = 'Go to site';
+    document.getElementById('instruction').innerHTML = '';
   }
 </script>
 </body>
