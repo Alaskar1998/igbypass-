@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Opening...</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0f1e;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      text-align: center;
+    }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid #1f2937;
+      border-top-color: #f5a623;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 24px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    h2 { font-size: 1.3rem; margin-bottom: 12px; }
+    p { color: #888; font-size: 0.95rem; line-height: 1.6; max-width: 300px; margin: 0 auto 24px; }
+
+    .gate { display: none; flex-direction: column; align-items: center; }
+    .warning { background: rgba(245,166,35,0.1); border: 1px solid rgba(245,166,35,0.3); border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; max-width: 320px; }
+    .warning p { color: #f5a623; margin: 0; font-size: 0.9rem; }
+
+    .open-btn {
+      display: inline-block;
+      background: #f5a623;
+      color: #000;
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 14px 28px;
+      border-radius: 10px;
+      text-decoration: none;
+      margin-bottom: 16px;
+      cursor: pointer;
+      border: none;
+      width: 100%;
+      max-width: 320px;
+    }
+    .instruction { font-size: 0.85rem; color: #555; margin-bottom: 20px; }
+    .skip { font-size: 0.8rem; color: #444; text-decoration: underline; cursor: pointer; }
+    .skip:hover { color: #666; }
+
+    .ios-instruction { display: none; }
+    .android-instruction { display: none; }
+  </style>
+</head>
+<body>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <h2>Opening in your browser...</h2>
+    <p>Taking you to your destination in Safari or Chrome.</p>
+  </div>
+
+  <div class="gate" id="gate">
+    <div class="warning">
+      <p>⚠️ If you continue here, you'll lose all your progress every time you return. Open in your browser to keep your progress.</p>
+    </div>
+
+    <h2 id="gateTitle">Open in your browser</h2>
+
+    <button class="open-btn" onclick="tryOpen()" id="openBtn">Open in Safari</button>
+
+    <p class="instruction ios-instruction" id="iosInstruction">
+      Tap <strong>•••</strong> (top right) → <strong>"Open in browser"</strong>
+    </p>
+    <p class="instruction android-instruction" id="androidInstruction">
+      Tap <strong>⋮</strong> (top right) → <strong>"Open in browser"</strong>
+    </p>
+
+    <span class="skip" onclick="continueHere()">Continue here anyway</span>
+  </div>
+
+<script>
+  function getParam(name) {
+    return new URLSearchParams(window.location.search).get(name);
+  }
+
+  const dest = getParam('u') || 'https://maharathub.com';
+  const ua = navigator.userAgent || '';
+  const isIG = ua.includes('Instagram') || ua.includes('FBAN') || ua.includes('FBAV');
+  const isIOS = /iP(hone|ad|od)/.test(ua);
+  const isAndroid = /Android/.test(ua);
+
+  function showGate() {
+    document.getElementById('loading').style.display = 'none';
+    const gate = document.getElementById('gate');
+    gate.style.display = 'flex';
+
+    if (isIOS) {
+      document.getElementById('openBtn').textContent = 'Open in Safari';
+      document.querySelector('.ios-instruction').style.display = 'block';
+    } else if (isAndroid) {
+      document.getElementById('openBtn').textContent = 'Open in Chrome';
+      document.querySelector('.android-instruction').style.display = 'block';
+    } else {
+      document.getElementById('openBtn').textContent = 'Open in browser';
+    }
+  }
+
+  function tryOpen() {
+    if (isAndroid) {
+      const intentUrl = 'intent://' + dest.replace(/^https?:\/\//, '') +
+        '#Intent;scheme=https;package=com.android.chrome;end';
+      window.location.href = intentUrl;
+      setTimeout(() => { window.location.href = dest; }, 1500);
+    } else if (isIOS) {
+      window.location.href = 'x-web-search://?' + dest;
+      setTimeout(() => { showGate(); }, 1500);
+    } else {
+      window.location.href = dest;
+    }
+  }
+
+  function continueHere() {
+    window.location.href = dest;
+  }
+
+  if (!isIG) {
+    window.location.href = dest;
+  } else if (isAndroid) {
+    setTimeout(() => {
+      const intentUrl = 'intent://' + dest.replace(/^https?:\/\//, '') +
+        '#Intent;scheme=https;package=com.android.chrome;end';
+      window.location.href = intentUrl;
+      setTimeout(showGate, 2000);
+    }, 800);
+  } else if (isIOS) {
+    setTimeout(() => {
+      window.location.href = 'x-web-search://?' + dest;
+      setTimeout(showGate, 1500);
+    }, 800);
+  } else {
+    showGate();
+  }
+</script>
+
+</body>
+</html>
